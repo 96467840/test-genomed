@@ -6,9 +6,9 @@ networks:
 
 services:
   php:
-    image: yiisoftware/yii2-php:8.3-apache
+    image: yiisoftware/yii2-php:7.4-apache
     ports:
-      - "8081:80"
+      - "8080:80"
     volumes:
       - ~/.composer-docker/cache:/root/.composer/cache:delegated
       - ./:/app:delegated
@@ -25,13 +25,13 @@ services:
       - "3306:3306"
     environment:
       MYSQL_DATABASE: yii2basic
-      MYSQL_USER: root
-      MYSQL_PASSWORD: 1
-      MYSQL_ROOT_PASSWORD: 1
+      MYSQL_USER: dbuser
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: verysecret
       SERVICE_TAGS: dev
       SERVICE_NAME: mysql
     volumes:
-      - ./mysql:/var/lib/mysql
+      - ./.mysql:/var/lib/mysql
     networks:
       - yii
 
@@ -39,12 +39,12 @@ services:
     image: phpmyadmin
     restart: always
     ports:
-      - 8080:80
+      - 8081:80
     environment:
        - PMA_ARBITRARY=1
        - PMA_HOST=mysql
        - PMA_USER=root
-       - PMA_PASSWORD=1
+       - PMA_PASSWORD=verysecret
     networks:
       - yii
     depends_on:

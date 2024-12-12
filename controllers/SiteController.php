@@ -2,6 +2,9 @@
 
 namespace app\controllers;
 
+use app\models\UrlForm;
+use Da\QrCode\Action\QrCodeAction;
+use app\services\CreateUrlService;
 use Yii;
 use yii\filters\AccessControl;
 use yii\web\Controller;
@@ -12,6 +15,14 @@ use app\models\ContactForm;
 
 class SiteController extends Controller
 {
+    private CreateUrlService $createUrlService;
+
+    public function __construct($id, $module, CreateUrlService $createUrlService, $config = [])
+    {
+        parent::__construct($id, $module, $config);
+        $this->createUrlService = $createUrlService;
+    }
+
     /**
      * {@inheritdoc}
      */
@@ -51,6 +62,12 @@ class SiteController extends Controller
                 'class' => 'yii\captcha\CaptchaAction',
                 'fixedVerifyCode' => YII_ENV_TEST ? 'testme' : null,
             ],
+            'qr' => [
+                'class' => QrCodeAction::className(),
+                'text' => 'https://2am.tech',
+                'param' => 'url',
+                'component' => 'qr' // if configured in our app as `qr`
+            ]
         ];
     }
 
@@ -61,7 +78,18 @@ class SiteController extends Controller
      */
     public function actionIndex()
     {
-        return $this->render('index');
+        $model = new UrlForm();
+        $save_error = null;
+        if ($model->load(Yii::$app->request->post()) && $model->validate()) {
+            try {
+                $url = $this->createUrlService->create($model);
+
+                return $this->render('qr', ['short_url' => $url->short_url]);
+            } catch (\Exception $e) {
+                $save_error = 'Ошибка сохранения: ' . $e->getMessage();
+            }
+        }
+        return $this->render('index', ['model' => $model, 'save_error' => $save_error]);
     }
 
     /**
